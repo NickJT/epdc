@@ -1,0 +1,923 @@
+I just installed Ubuntu 22.04 and made first sudo update and upgrade installations.
+Date and time is now : 2023-02-01 15:20
+
+. Start debugger in tui-mode:
+gdb-multiarch pico-blink.elf -tui
+(gdb)target remote localhost:3333
+(gdb)load
+(gdb)break main
+(gdb)next
+
+openocd -f interface/picoprobe.cfg -f target/rp2040.cfg -c "transport select swd" -c "adapter speed 5000"
+
+openocd -f interface/picoprobe.cfg -f target/rp2040.cfg -c "program test.elf verify reset exit"
+
+RP documents and sofware snippets from here:
+https://datasheets.raspberrypi.com/
+
+RP Forum Pico
+https://forums.raspberrypi.com/viewforum.php?f=143&sid=e376d386c86d07bc7196df8a56bd625f
+
+Reed
+https://areed.me/posts/2021-05-09_setting_up_raspberry_pi_pico_development_in_vscode_on_arch_linux/
+
+openocd -s ~/pico/openocd/tcl -f interface/picoprobe.cfg -f target/rp2040.cfg
+openocd -s ~/pico/openocd/tcl -f interface/picoprobe.cfg -f target/rp2040.cfg -c "adapter speed 5000" 
+
+openocd -s ~/pico/openocd/tcl -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c "adapter speed 5000" 
+
+
+1.
+? How to install c and c++ compilers on Ubuntu 22.04
+=>
+sudo apt update
+sudo apt install build-essential
+
+gcc --version
+gcc (Ubuntu 11.3.0-1ubuntu1~22.04) 11.3.0
+
+2.
+Installing VS Code from snap:
+sudo snap install code --classic
+
+((
+sudo snap remove code
+))
+
+3.
+Install locate command that is good for searching files:
+sudo apt install plocate
+and search e.g stdio.h
+locate stdio.h
+
+4.
+Installing git on Ubuntu (wget is already installed on the system)
+sudo apt install git
+
+
+
+5.
+Downloading pico-sdk installation instructions from datasheets.raspberrypi.com
+getting-started-with-pico.pdf (01 Dec 2022) = get-start-doc
+https://datasheets.raspberrypi.com/pico/getting-started-with-pico.pdf
+
+I am not using pico_setup.sh because vs code will not be installed on Ubuntu correct way
+with this setup utility. Ubunut is better to install from snap!
+Secondly OpenOCD will be configured to RPi X single board computer.
+
+
+6.
+Placing environment variables into the .bashrc file
+
+Defining PICO_SDK_PATH
+Write into the ~/.bashrc:
+export PICO_SDK_PATH="/home/pena/pico/pico-sdk"
+(with quotes)
+and with same priciple the rest of directories
+
+export PICO_PICOTOOL_PATH="/home/pena/pico/picotool/bin"
+export PICO_EXAMPLES_PATH=""
+export PICO_EXTRAS_PATH=""
+export PICO_PLAYGROUND_PATH=""
+
+and activate new environment variables :
+source ~/.bashrc
+
+
+SETTING PICO ENVIRONMENT
+Now we follow get-start-doc:
+2.1 Get the SDK and examples
+
+7.
+Create directory "pico" (without quotes) under your home directory and
+change your location there 
+cd ~
+mkdir pico
+cd pico
+
+8.
+Downloading pico-sdk:
+git clone https://github.com/raspberrypi/pico-sdk.git --branch master
+
+9.
+cd pico-sdk
+git submodule update --init
+cd ..
+git clone https://github.com/raspberrypi/pico-examples.git --branch master
+
+10.
+2.2 Installing the Toolchain
+
+sudo apt update
+
+We already have build-essential installed, but you can leave or take it!
+sudo apt install cmake gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential
+
+IMPORTANT : Ubuntu and Debian users might additionally need to also install libstdc++-arm-none-eabi-newlib.
+
+11. Let's installing them
+sudo apt install libstdc++-arm-none-eabi-newlib
+
+12.
+
+Let's update pico-sdk
+cd pico-sdk
+git pull
+git submodule update
+
+13. Time for getting cup of coffee
+and booting system.
+
+14. Compiling pico-examples
+cd ~/pico/pico-examples
+mkdir build
+cd build
+cmake ..
+
+15.
+All examples are built into build directory
+and now we can compile one by one by
+moving into desired directory like :
+
+cd blink
+and running
+make
+
+We have now blink.uf2 and blink.elf
+
+16.
+Loading example blink.uf2 into pico:
+
+There is no ttyACM0 or ttyUSB port active when pico is blinking!
+
+17.
+Installing CuteCom (like minicom or picocom)
+
+sudo apt update
+sudo apt install cutecom
+
+https://askubuntu.com/questions/79565/how-to-add-existing-user-to-an-existing-group
+sudo usermod -a -G groupName userName
+sudo usermod -a -G plugdev $USER
+
+How do I allow a non-default user to use serial device ttyUSB0?
+sudo adduser pena dialout
+
+18.
+Let's find out how to install rest of components with git:
+wget https://raw.githubusercontent.com/raspberrypi/pico-setup/master/pico_setup.sh
+
+Rename file to .txt so we don't accidentally install files what we don't want.
+
+19.
+Installing Picotool
+get-start-doc Appendix B
+
+cd ~/pico
+
+git clone https://github.com/raspberrypi/picotool.git --branch master
+
+20.
+You will also need to install libusb if it is not already installed,
+and pkg-config so that picotool will compile.
+sudo apt install libusb-1.0-0-dev
+sudo apt install pkg-config
+
+
+21. Building picotool
+cd picotool
+mkdir build
+cd build
+cmake ../ *** HMM.. What the heck - it is ok
+
+22. Just taking info of just compiled app with picotool:
+sudo ./picotool info -a
+Program Information
+ name:          blink
+ web site:      https://github.com/raspberrypi/pico-examples/tree/HEAD/blink
+ binary start:  0x10000000
+ binary end:    0x100020b0
+
+Fixed Pin Information
+ none
+
+Build Information
+ sdk version:       1.4.0
+ pico_board:        pico
+ boot2_name:        boot2_w25q080
+ build date:        Feb  1 2023
+ build attributes:  Release
+
+Device Information
+ flash size:   2048K
+ ROM version:  2
+
+23. Downloading pico-project-generator 
+By the way without this tool many of us would be in trouble
+for example with CMakeLists.txt configurations.
+
+git clone https://github.com/raspberrypi/pico-project-generator.git --branch master
+cd pico-project-generator
+./pico_project.py --gui
+
+We need also tkinter gui module to show tool's form
+sudo apt install python3-tk
+
+Testing that app's form is shown:
+./pico_project.py --gui
+
+************ Difficult part starts ...
+
+24. Let's try to configure OpenOCD
+These we already have : build-essential libusb-1.0-0-dev
+
+sudo apt install automake autoconf texinfo libtool libftdi-dev 
+
+Before continuing it's better to look at openocd git hub:
+github.com/openocd-org/openocd
+
+I want configure picotool, jlink, cmsis-dap - but
+seems that there will be extra phases :
+- Optional CMSIS-DAP adapter driver needs HDAPI library.
+- Optional JLink adapter driver needs libjaylink; build from git can
+  retrieve libjaylink as git submodule.
+
+Now configuring only for picoprobe but I am not going to install
+openocd configurations on system level (= sudo make install).
+Just testing that we will have no errors !!!
+
+25. Downloading OpenOCD from RP git hub:
+
+cd ~/pico
+git clone https://github.com/raspberrypi/openocd.git --branch rp2040 --depth=1
+
+26.
+cd openocd
+./bootstrap
+See Listing_01
+
+27. Should I use --disable-werror - e.g if
+app has unused variables, that warning is interpreted as
+an error if you don't use --disabe-werror
+OK, at first time we don't use --disable-werror because
+I want to see, that is there any warnings!
+./configure --enable-picoprobe 
+
+/// SECOND ROUND - Now I am going to use --disable-werror directive
+
+./configure --enable-picoprobe --disable-werror  
+
+See Listing_02
+
+
+
+28. Final compiling
+make -j6
+(j6 = do make with 6 cores as I have!!!)
+
+I didn't find any warnings nor erros from make listing!!!
+
+/home/pena/pico/openocd/tcl/target
+rp2040.cfg
+rp2040-core0.cfg
+rp2040-core1.cfg
+rp2040-rescue.cfg
+
+29. OpenOCD Executable is here :
+
+/home/pena/pico/openocd/src/openocd
+
+We can run it from here because it is not installed system wide!
+
+30. It is time to publish openocd
+sudo make install
+
+rules should be here:
+/etc/udev/rules.d
+
+rp may put udev file here:
+/usr/lib/udev/rules.d/60-openocd.rules,
+
+31. gdb-multiarch is not installed
+sudo apt install gdb-multiarch
+
+32.
+Installing picoprobe 
+
+cd ~/pico
+$ git clone https://github.com/raspberrypi/picoprobe.git
+$ cd picoprobe
+$ git submodule update --init
+$ mkdir build
+$ cd build
+
+cmake ..
+$ make -j4
+
+Upload picoprobe into pico (norma)
+
+33. 
+
+Checking picoprobe information:
+
+sudo ./picotool info -a
+[sudo] password for pena: 
+Program Information
+ name:          picoprobe
+ binary start:  0x10000000
+ binary end:    0x10009ae8
+
+Fixed Pin Information
+ 0:   UART0 TX
+ 25:  LED
+
+Build Information
+ sdk version:       1.4.0
+ pico_board:        pico
+ boot2_name:        boot2_w25q080
+ build date:        Feb  1 2023
+ build attributes:  Release
+
+Device Information
+ flash size:   2048K
+ ROM version:  2
+ 
+ 34. Now checking is picoprobe recognized by openocd
+ 
+openocd -s ~/pico/openocd/tcl -f interface/picoprobe.cfg -f target/rp2040.cfg
+==>
+Info : Listening on port 4444 for telnet connections
+Error: Failed to open or find the device
+Error: Can't find a picoprobe device! Please check device connections and permissions.
+
+OK picoprobe is not working !!!
+Let's download working version from RP:
+https://datasheets.raspberrypi.com/
+
+35. Now copying 60-openocd.rules:
+
+cd /home/pena/pico/openocd/contrib
+
+sudo cp 60-openocd.rules /etc/udev/rules.d/
+
+multiarch command
+openocd -f interface/picoprobe.cfg -f target/rp2040.cfg -c "transport select swd" -c "adapter speed 5000"
+
+36. This is true now : 
+
+Info : Listening on port 6666 for tcl connections
+Info : Listening on port 4444 for telnet connections
+Info : clock speed 5000 kHz
+Info : DAP init failed
+
+36.
+I found this note from previous instllation
+cd pico-sdk
+git pull --rebase
+git submodule update
+
+=>
+cd pico/pico-sdk
+pena@ubuocd:~/pico/pico-sdk$ git pull --rebase
+remote: Enumerating objects: 8, done.
+remote: Counting objects: 100% (8/8), done.
+remote: Compressing objects: 100% (2/2), done.
+remote: Total 8 (delta 4), reused 8 (delta 4), pack-reused 0
+Unpacking objects: 100% (8/8), 850 bytes | 283.00 KiB/s, done.
+From https://github.com/raspberrypi/pico-sdk
+ * [new branch]      pico_rand_docs -> origin/pico_rand_docs
+Already up to date.
+
+
+37.
+sudo adduser pena dialout
+I am already a member...
+
+38. Once again openocd 
+
+git clone https://github.com/raspberrypi/openocd.git --branch picoprobe --depth=1 --no-single-branch
+
+cd openocd
+./bootstrap
+./configure --enable-picoprobe --enable-jlink --disable-werror  
+
+38.
+
+cd /picoprobe
+mkdir build 
+cd build 
+cmake “Unix Makefiles” .. 
+make
+
+39. Trying to compile with VS Code and this error appears:
+
+Waiting for gdb server to start...[2023-02-01T22:22:37.517Z] SERVER CONSOLE DEBUG: onBackendConnect: gdb-server session connected. You can switch to "DEBUG CONSOLE" to see GDB interactions.
+openocd -c "gdb_port 50000" -c "tcl_port 50001" -c "telnet_port 50002" -s /home/pena/pico/first -f /home/pena/.vscode/extensions/marus25.cortex-debug-1.6.10/support/openocd-helpers.tcl -f interface/raspberrypi-swd.cfg -f target/rp2040.cfg
+Open On-Chip Debugger 0.11.0-g4f2ae61 (2023-02-01-23:01)
+Licensed under GNU GPL v2
+For bug reports, read
+        http://openocd.org/doc/doxygen/bugs.html
+CDRTOSConfigure
+Error: The specified debug interface was not found (bcm2835gpio)
+The following debug adapters are available:
+1: ftdi
+2: usb_blaster
+3: ft232r
+4: presto
+5: usbprog
+6: openjtag
+7: jlink
+8: vsllink
+9: rlink
+10: ulink
+11: arm-jtag-ew
+12: hla
+13: osbdm
+14: opendous
+15: aice
+16: picoprobe
+17: cmsis-dap
+18: xds110
+19: st-link
+[2023-02-01T22:22:37.546Z] SERVER CONSOLE DEBUG: onBackendConnect: gdb-server session closed
+GDB server session ended. This terminal will be reused, waiting for next session to start...
+
+What the heck - I haven't configured openocd for RPi 4
+launch.json was configured for raspberry-swd-something like that ... 
+=> now it is picoprobe
+
+      "configFiles": [
+        "interface/picoprobe.cfg",
+        
+        
+        
+
+**** warnigs when ./configuring
+-MF src/flash/nor/.deps/numicro.Tpo -c src/flash/nor/numicro.c -o src/flash/nor/numicro.o
+src/flash/nor/numicro.c: In function ‘numicro_fmc_cmd’:
+src/flash/nor/numicro.c:1244:17: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+ 1244 |                 if (retval != ERROR_OK)
+      |                 ^~
+In file included from ./src/flash/common.h:21,
+                 from src/flash/nor/core.h:25,
+                 from src/flash/nor/imp.h:24,
+                 from src/flash/nor/numicro.c:32:
+./src/helper/log.h:119:9: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  119 |         do { \
+      |         ^~
+src/flash/nor/numicro.c:1246:25: note: in expansion of macro ‘LOG_DEBUG’
+ 1246 |                         LOG_DEBUG("status: 0x%" PRIx32 "", status);
+      |                         ^~~~~~~~~
+src/flash/nor/numicro.c: In function ‘numicro_erase’:
+src/flash/nor/numicro.c:1513:25: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+ 1513 |                         if (retval != ERROR_OK)
+      |                         ^~
+In file included from ./src/flash/common.h:21,
+                 from src/flash/nor/core.h:25,
+                 from src/flash/nor/imp.h:24,
+                 from src/flash/nor/numicro.c:32:
+./src/helper/log.h:119:9: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  119 |         do { \
+      |         ^~
+src/flash/nor/numicro.c:1515:33: note: in expansion of macro ‘LOG_DEBUG’
+ 1515 |                                 LOG_DEBUG("status: 0x%" PRIx32 "", status);
+      |                                 ^~~~~~~~~
+src/flash/nor/numicro.c: In function ‘numicro_write’:
+src/flash/nor/numicro.c:1602:33: warning: this ‘if’ clause does not guard... [-Wmisleading-indentation]
+ 1602 |                                 if (retval != ERROR_OK)
+      |                                 ^~
+In file included from ./src/flash/common.h:21,
+                 from src/flash/nor/core.h:25,
+                 from src/flash/nor/imp.h:24,
+                 from src/flash/nor/numicro.c:32:
+./src/helper/log.h:119:9: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’
+  119 |         do { \
+      |         ^~
+src/flash/nor/numicro.c:1604:41: note: in expansion of macro ‘LOG_DEBUG’
+ 1604 |                                         LOG_DEBUG("status: 0x%" PRIx32 "", status);
+      |                                         ^~~~~~~~~
+depbase=`echo src/flash/nor/ocl.lo | sed 's|[^/]*$|.deps/&|;s|\.lo$||'`;\
+/bin/bash ./libtool  --tag=CC   --mode=compile gcc -DHAVE_CONFIG_H -I.   -I./src -I./src -I./src/helper -DPKGDATADIR=\"/usr/local/share/openocd\" -DBINDIR=\"/usr/local/bin\" -I./jimtcl -I./jimtcl  -Wall -Wstrict-prototypes -Wformat-security -Wshadow -Wextra -Wno-unused-parameter -Wbad-function-cast -Wcast-align -Wredundant-decls -Wpointer-arith -g -O2 -MT src/flash/nor/ocl.lo -MD -MP -MF $depbase.Tpo -c -o src/flash/nor/ocl.lo src/flash/nor/ocl.c &&\
+mv -f $depbase.Tpo $depbase.Plo
+****
+
+2
+****
+src/target/arm920t.c: In function ‘arm920t_read_cp15_interpreted.constprop’:
+src/target/arm920t.c:255:9: warning: ‘arm9tdmi_write_core_regs’ accessing 64 bytes in a region of size 8 [-Wstringop-overflow=]
+  255 |         arm9tdmi_write_core_regs(target, 0x2, regs);
+      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/target/arm920t.c:255:9: note: referencing argument 3 of type ‘uint32_t *’ {aka ‘unsigned int *’}
+In file included from src/target/arm920t.h:22,
+                 from src/target/arm920t.c:24:
+src/target/arm9tdmi.h:41:6: note: in a call to function ‘arm9tdmi_write_core_regs’
+   41 | void arm9tdmi_write_core_regs(struct target *target,
+      |      ^~~~~~~~~~~~~~~~~~~~~~~~
+src/target/arm920t.c:273:9: warning: ‘arm9tdmi_read_core_regs’ accessing 128 bytes in a region of size 8 [-Wstringop-overflow=]
+  273 |         arm9tdmi_read_core_regs(target, 0x1, regs_p);
+      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/target/arm920t.c:273:9: note: referencing argument 3 of type ‘uint32_t **’ {aka ‘unsigned int **’}
+In file included from src/target/arm920t.h:22,
+                 from src/target/arm920t.c:24:
+src/target/arm9tdmi.h:39:6: note: in a call to function ‘arm9tdmi_read_core_regs’
+   39 | void arm9tdmi_read_core_regs(struct target *target,
+      |      ^~~~~~~~~~~~~~~~~~~~~~~
+src/target/arm920t.c: In function ‘arm920t_write_cp15_interpreted’:
+src/target/arm920t.c:304:9: warning: ‘arm9tdmi_write_core_regs’ accessing 64 bytes in a region of size 8 [-Wstringop-overflow=]
+  304 |         arm9tdmi_write_core_regs(target, 0x3, regs);
+      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+src/target/arm920t.c:304:9: note: referencing argument 3 of type ‘uint32_t *’ {aka ‘unsigned int *’}
+In file included from src/target/arm920t.h:22,
+                 from src/target/arm920t.c:24:
+src/target/arm9tdmi.h:41:6: note: in a call to function ‘arm9tdmi_write_core_regs’
+   41 | void arm9tdmi_write_core_regs(struct target *target,
+      |      ^~~~~~~~~~~~~~~~~~~~~~~~
+mv -f src/target/.deps/libtarget_la-arm920t.Tpo src/target/.deps/libtarget_la-arm920t.Plo
+
+****
+end talkings
+libtool: link: gcc -Wall -Wstrict-prototypes -Wformat-security -Wshadow -Wextra -Wno-unused-parameter -Wbad-function-cast -Wcast-align -Wredundant-decls -Wpointer-arith -g -O2 -o src/openocd src/main.o  src/.libs/libopenocd.a -lusb -lftdi -lusb-1.0 -lm ./jimtcl/libjim.a
+make[3]: Entering directory '/home/pena/pico/openocd'
+ /usr/bin/mkdir -p '/usr/local/bin'
+  /bin/bash ./libtool   --mode=install /usr/bin/install -c src/openocd '/usr/local/bin'
+libtool: install: /usr/bin/install -c src/openocd /usr/local/bin/openocd
+ /usr/bin/mkdir -p '/usr/local/share/openocd/OpenULINK'
+ /usr/bin/install -c -m 644 src/jtag/drivers/OpenULINK/ulink_firmware.hex '/usr/local/share/openocd/OpenULINK'
+ /usr/bin/mkdir -p '/usr/local/share/info'
+ /usr/bin/install -c -m 644 ./doc/openocd.info ./doc/openocd.info-1 ./doc/openocd.info-2 '/usr/local/share/info'
+ install-info --info-dir='/usr/local/share/info' '/usr/local/share/info/openocd.info'
+ /usr/bin/mkdir -p '/usr/local/share/man/man1'
+ /usr/bin/install -c -m 644 doc/openocd.1 '/usr/local/share/man/man1'
+ /usr/bin/mkdir -p '/usr/local/share/openocd'
+ /usr/bin/mkdir -p '/usr/local/share/openocd/contrib'
+ /usr/bin/install -c -m 644  contrib/60-openocd.rules '/usr/local/share/openocd/contrib'
+ /usr/bin/mkdir -p '/usr/local/share/openocd/contrib/libdcc'
+ /usr/bin/install -c -m 644  contrib/libdcc/dcc_stdio.c contrib/libdcc/dcc_stdio.h contrib/libdcc/example.c contrib/libdcc/README '/usr/local/share/openocd/contrib/libdcc'
+make  install-data-hook
+make[4]: Entering directory '/home/pena/pico/openocd'
+for i in $(find ./tcl -name '*.cfg' -o -name '*.tcl' -o -name '*.txt' | sed -e 's,^./tcl,,'); do \
+	j="/usr/local/share/openocd/scripts/$i" && \
+	mkdir -p "$(dirname $j)" && \
+	/usr/bin/install -c -m 644 ./tcl/$i $j; \
+done
+make[4]: Leaving directory '/home/pena/pico/openocd'
+make[3]: Leaving directory '/home/pena/pico/openocd'
+make[2]: Leaving directory '/home/pena/pico/openocd'
+make[1]: Leaving directory '/home/pena/pico/openocd'
+
+===================================================================================
+
+We go now according Appendix A - getting started doc
+sudo apt install automake autoconf build-essential texinfo libtool libftdi-dev libusb-1.0-0-
+dev
+
+GOTO END OF LISTING 
+
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+autoconf is already the newest version (2.71-2).
+automake is already the newest version (1:1.16.5-1.3).
+build-essential is already the newest version (12.9ubuntu3).
+libtool is already the newest version (2.4.6-15build2).
+libftdi-dev is already the newest version (0.20-4ubuntu1).
+texinfo is already the newest version (6.8-4build1).
+The following packages were automatically installed and are no longer required:
+  acl apg apturl-common chromium-codecs-ffmpeg-extra colord-data cups-browsed cups-core-drivers cups-daemon
+  cups-server-common gir1.2-goa-1.0 gir1.2-gst-plugins-base-1.0 gir1.2-rb-3.0 gir1.2-snapd-1 gnome-control-center-faces
+  gnome-online-accounts gstreamer1.0-vaapi hplip-data i965-va-driver intel-media-va-driver libaacs0 libaom3 libass9
+  libavcodec58 libavformat58 libavutil56 libbdplus0 libblas3 libbluray2 libbs2b0 libcdio-cdda2 libcdio-paranoia2
+  libchromaprint1 libcodec2-1.0 libcolord-gtk1 libcupsimage2 libdav1d5 libdmapsharing-3.0-2 libflite1 libfreerdp-server2-2
+  libfreerdp2-2 libfwupd2 libgcab-1.0-0 libgme0 libgphoto2-l10n libgpod4 libgsm1 libgsound0 libgssdp-1.2-0
+  libgstreamer-plugins-bad1.0-0 libgupnp-1.2-1 libgupnp-av-1.0-3 libgupnp-dlna-2.0-4 libhidapi-hidraw0 libieee1284-3
+  libigdgmm12 libimagequant0 libjcat1 libldb2 liblilv-0-0 liblirc-client0 libllvm15 libmfx1 libmtp-common libmysofa1
+  libnfs13 libnorm1 libopenmpt0 libpgm-5.3-0 libpostproc55 librabbitmq4 libraqm0 libraw20 librubberband2 librygel-core-2.6-2
+  librygel-db-2.6-2 librygel-renderer-2.6-2 librygel-server-2.6-2 libsane-common libserd-0-0 libsgutils2-2 libshine3
+  libsmbclient libsmbios-c2 libsnappy1v5 libsnmp-base libsnmp40 libsord-0-0 libsratom-0-0 libsrt1.4-gnutls libssh-gcrypt-4
+  libswresample3 libswscale5 libtalloc2 libtevent0 libudfread0 libusb-1.0-doc libva-drm2 libva-wayland2 libva-x11-2 libva2
+  libvdpau1 libvidstab1.1 libvncserver1 libwbclient0 libwebpmux3 libwinpr2-2 libx265-199 libxvidcore4 libzimg2 libzmq5
+  libzvbi-common libzvbi0 mesa-va-drivers mesa-vdpau-drivers mobile-broadband-provider-info network-manager-gnome
+  pocketsphinx-en-us printer-driver-postscript-hp python3-certifi python3-click python3-colorama python3-dateutil
+  python3-debconf python3-ldb python3-macaroonbakery python3-mako python3-markupsafe python3-olefile python3-pil
+  python3-protobuf python3-pymacaroons python3-renderpm python3-reportlab python3-reportlab-accel python3-requests
+  python3-rfc3339 python3-software-properties python3-talloc python3-tz python3-xkit rygel samba-libs sane-airscan
+  shotwell-common software-properties-common ssl-cert tcl ubuntu-advantage-desktop-daemon unattended-upgrades
+  update-notifier-common usb-modeswitch-data va-driver-all vdpau-driver-all
+Use 'sudo apt autoremove' to remove them.
+
+The following additional packages will be installed:
+  python3-software-properties software-properties-common ubuntu-advantage-tools update-notifier-common
+The following packages will be REMOVED:
+  apturl bluez-cups colord cups fprintd fwupd gnome-control-center gnome-remote-desktop gvfs-backends hplip ipp-usb
+  libcolorhug2 libflashrom1 libfprint-2-2 libfreerdp-client2-2 libftdi1-2 libfwupdplugin5 libgphoto2-6 libgphoto2-port12
+  libgpod-common libgusb2 libhidapi-dev libhidapi-libusb0 libhpmud0 libmtp-runtime libmtp9 libpam-fprintd libsane-hpaio
+  libsane1 libusb-1.0-0 libusb-1.0-0-dev nautilus-share printer-driver-hpcups printer-driver-splix remmina-plugin-rdp
+  rhythmbox-plugins sane-utils shotwell simple-scan software-properties-gtk system-config-printer-udev ubuntu-desktop
+  ubuntu-desktop-minimal ubuntu-drivers-common ubuntu-release-upgrader-gtk ubuntu-standard update-manager update-notifier
+  usb-modeswitch usbmuxd usbutils
+The following packages will be upgraded:
+  python3-software-properties software-properties-common ubuntu-advantage-tools update-notifier-common
+4 upgraded, 0 newly installed, 51 to remove and 18 not upgraded.
+Need to get 400 kB of archives.
+After this operation, 63,4 MB disk space will be freed.
+Do you want to continue? [Y/n] y
+Get:1 http://fi.archive.ubuntu.com/ubuntu jammy-updates/main amd64 update-notifier-common all 3.192.54.3 [185 kB]
+Get:2 http://fi.archive.ubuntu.com/ubuntu jammy-updates/main amd64 ubuntu-advantage-tools amd64 27.13.2~22.04.1 [172 kB]
+Get:3 http://fi.archive.ubuntu.com/ubuntu jammy-updates/main amd64 software-properties-common all 0.99.22.5 [14,1 kB]
+Get:4 http://fi.archive.ubuntu.com/ubuntu jammy-updates/main amd64 python3-software-properties all 0.99.22.5 [28,8 kB]
+Fetched 400 kB in 0s (2 833 kB/s)                      
+Preconfiguring packages ...
+(Reading database ... 212749 files and directories currently installed.)
+Removing nautilus-share (0.7.3-2ubuntu6) ...
+Removing apturl (0.5.2ubuntu22) ...
+Removing bluez-cups (5.64-0ubuntu1) ...
+Removing ubuntu-desktop (1.481) ...
+Removing ubuntu-desktop-minimal (1.481) ...
+Removing gnome-control-center (1:41.4-1ubuntu13.2) ...
+Removing colord (1.4.6-1) ...
+Removing printer-driver-splix (2.0.0+svn315-7fakesync1build3) ...
+Removing hplip (3.21.12+dfsg0-1) ...
+Removing printer-driver-hpcups (3.21.12+dfsg0-1) ...
+Removing cups (2.4.1op1-1ubuntu4.1) ...
+Removing libpam-fprintd:amd64 (1.94.2-1ubuntu0.22.04.1) ...
+Removing fprintd (1.94.2-1ubuntu0.22.04.1) ...
+Removing fwupd (1.7.9-1~22.04.1) ...
+Removing gnome-remote-desktop (42.0-4ubuntu1) ...
+Removing gvfs-backends (1.48.2-0ubuntu1) ...
+Removing ipp-usb (0.9.20-1) ...
+Removing libcolorhug2:amd64 (1.4.6-1) ...
+Removing libflashrom1:amd64 (1.2-5build1) ...
+Removing libfprint-2-2:amd64 (1:1.94.3+tod1-0ubuntu2~22.04.03) ...
+Removing remmina-plugin-rdp:amd64 (1.4.25+dfsg-1) ...
+Removing libfreerdp-client2-2:amd64 (2.6.1+dfsg1-3ubuntu2.3) ...
+Removing libftdi1-2:amd64 (1.5-5build3) ...
+Removing libfwupdplugin5:amd64 (1.7.9-1~22.04.1) ...
+Removing shotwell (0.30.14-1ubuntu6) ...
+Removing simple-scan (42.0-1) ...
+Removing libgpod-common (0.8.3-16build2) ...
+Removing libgusb2:amd64 (0.3.10-1) ...
+Removing libhidapi-dev:amd64 (0.11.2-1) ...
+Removing libhidapi-libusb0:amd64 (0.11.2-1) ...
+Removing libsane-hpaio:amd64 (3.21.12+dfsg0-1) ...
+Removing libhpmud0:amd64 (3.21.12+dfsg0-1) ...
+Removing libmtp-runtime (1.1.19-1build1) ...
+Removing rhythmbox-plugins (3.4.4-5ubuntu1) ...
+Removing libmtp9:amd64 (1.1.19-1build1) ...
+Removing libusb-1.0-0-dev:amd64 (2:1.0.25-1ubuntu2) ...
+Removing usb-modeswitch (2.6.1-3ubuntu2) ...
+Removing sane-utils (1.1.1-5) ...
+Removing software-properties-gtk (0.99.22) ...
+Removing system-config-printer-udev (1.5.16-0ubuntu3) ...
+Removing ubuntu-standard (1.481) ...
+Removing usbmuxd (1.1.1-2build2) ...
+Removing libsane1:amd64 (1.1.1-5) ...
+Removing libgphoto2-6:amd64 (2.5.27-1build2) ...
+Removing libgphoto2-port12:amd64 (2.5.27-1build2) ...
+Removing update-notifier (3.192.54) ...
+Removing ubuntu-drivers-common (1:0.9.6.1) ...
+Removing usbutils (1:014-1build1) ...
+Removing libusb-1.0-0:amd64 (2:1.0.25-1ubuntu2) ...
+Removing update-manager (1:22.04.10) ...
+Removing ubuntu-release-upgrader-gtk (1:22.04.15) ...
+(Reading database ... 210612 files and directories currently installed.)
+Preparing to unpack .../update-notifier-common_3.192.54.3_all.deb ...
+Unpacking update-notifier-common (3.192.54.3) over (3.192.54) ...
+Preparing to unpack .../ubuntu-advantage-tools_27.13.2~22.04.1_amd64.deb ...
+Unpacking ubuntu-advantage-tools (27.13.2~22.04.1) over (27.7~22.04.1) ...
+Preparing to unpack .../software-properties-common_0.99.22.5_all.deb ...
+Unpacking software-properties-common (0.99.22.5) over (0.99.22) ...
+Preparing to unpack .../python3-software-properties_0.99.22.5_all.deb ...
+Unpacking python3-software-properties (0.99.22.5) over (0.99.22) ...
+Setting up update-notifier-common (3.192.54.3) ...
+update-notifier-download.service is a disabled or a static unit not running, not starting it.
+update-notifier-motd.service is a disabled or a static unit not running, not starting it.
+Setting up python3-software-properties (0.99.22.5) ...
+Setting up ubuntu-advantage-tools (27.13.2~22.04.1) ...
+Installing new version of config file /etc/apt/apt.conf.d/20apt-esm-hook.conf ...
+Installing new version of config file /etc/ubuntu-advantage/help_data.yaml ...
+Installing new version of config file /etc/ubuntu-advantage/uaclient.conf ...
+Installing new version of config file /etc/update-motd.d/91-contract-ua-esm-status ...
+Created symlink /etc/systemd/system/multi-user.target.wants/ubuntu-advantage.service → /lib/systemd/system/ubuntu-advantage.se
+rvice.
+Setting up software-properties-common (0.99.22.5) ...
+Processing triggers for shared-mime-info (2.1-2) ...
+Processing triggers for udev (249.11-0ubuntu3.6) ...
+Processing triggers for mailcap (3.70+nmu1ubuntu1) ...
+Processing triggers for desktop-file-utils (0.26-1ubuntu3) ...
+Processing triggers for hicolor-icon-theme (0.17-2) ...
+Processing triggers for gnome-menus (3.36.0-1ubuntu3) ...
+Processing triggers for libglib2.0-0:amd64 (2.72.4-0ubuntu1) ...
+Processing triggers for libc-bin (2.35-0ubuntu3.1) ...
+Processing triggers for man-db (2.10.2-1) ...
+Processing triggers for dbus (1.12.20-2ubuntu4.1) ...
+Command 'dev' not found, did you mean:
+  command 'den' from snap den (1.2.0-0)
+  command 'ddv' from deb ncbi-tools-x11 (6.1.20170106+dfsg1-9)
+  command 'dlv' from deb delve (1.8.1-1)
+  command 'dex' from deb dex (0.9.0-1)
+  command 'xev' from deb x11-utils (7.7+5build2)
+  command 'mev' from deb gpm (1.20.7-10build1)
+  command 'rev' from deb util-linux (2.37.2-4ubuntu3)
+  command 'dav' from deb dav-text (0.9.0-2)
+  command 'wev' from deb wev (1.0.0-2)
+  command 'delv' from deb bind9-dnsutils (1:9.18.1-1ubuntu1.3)
+See 'snap info <snapname>' for additional versions.
+
+CONTINUING
+
+git clone https://github.com/raspberrypi/openocd.git --branch rp2040 --depth=1
+
+configure: error: libusb-1.x is required for the Raspberry Pi Pico Probe
+On Linux, I had to install the -dev libraries in addition to the user libraries.
+
+sudo apt install libusb-1.0-dev??
+
+THAT :  libusb-1.0-0-dev
+https://www.digikey.be/en/maker/projects/raspberry-pi-pico-and-rp2040-cc-part-2-debugging-with-vs-code/470abc7efb07432b82c95f6f67f184c0
+
+cd ~/pico
+sudo apt install automake autoconf build-essential texinfo libtool libftdi-dev libusb-1.0-0-dev
+git clone https://github.com/raspberrypi/openocd.git --branch picoprobe --depth=1 --no-single-branch
+cd openocd
+./bootstrap
+./configure --enable-picoprobe ①
+make -j4
+sudo make i
+
+SHAWN's ORDER:
+https://www.digikey.be/en/maker/projects/raspberry-pi-pico-and-rp2040-cc-part-2-debugging-with-vs-code/470abc7efb07432b82c95f6f67f184c0
+
+===> sudo apt install libftdi-dev libusb-1.0-0-dev
+
+make
+sudo make install
+
+=== NOw picoprobe
+
+cd ~/pico
+$ git clone https://github.com/raspberrypi/picoprobe.git
+$ cd picoprobe
+$ git submodule update --init
+$ mkdir build
+$ cd build
+
+cmake ..
+$ make
+
+///////////////////// PICOPROBE AND OPENOCD ARE PROBLEMS
+
+openocd
+cd openocd
+./bootstrap
+./configure --enable-picoprobe --disable-werror  
+sudo make install
+
+/////////////// I have placed udev rules but still errors occur
+https://stackoverflow.com/questions/72616674/error-libusb-open-failed-with-libusb-error-access-visual-studio-code
+https://stackoverflow.com/questions/72616674/error-libusb-open-failed-with-libusb-error-access-visual-studio-code
+
+sudo apt update
+sudo apt install binutils-multiarch
+cd /usr/bin
+ln -s /usr/bin/objdump objdump-multiarch
+ln -s /usr/bin/nm nm-multiarch 
+
+https://forums.raspberrypi.com/viewtopic.php?t=333146
+
+sudo wget https://raw.githubusercontent.com/raspberrypi/openocd/rp2040/contrib/60-openocd.rules
+sudo usermod -a -G plugdev
+
+2023-02-03
+==============================
+
+https://github.com/raspberrypi/pico-examples/issues
+
+raspberry issues tells that picoprobe can be run as cmsis-dap.cfg
+Means that picoprobe compiled in Ubuntu is working version.
+Let's see how the thing really is.
+
+https://github.com/raspberrypi/picoprobe/issues/48
+
+This works with picoprobe downloaded from RP web page.
+./src/openocd -f interface/picoprobe.cfg -f target/rp2040.cfg -s tcl
+
+This may work with locally compiled version of picoprobe
+openocd -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c "adapter speed 5000" -s tcl
+
+This command loads an application on pico:
+openocd -f interface/cmsis-dap.cfg -f target/rp2040.cfg -c "adapter speed 5000" -c "program blink/blink.elf 
+OK - upper command works with locally compiled picorobe - but you have to use cmsis-dap.cfg !!! as is
+
+
+
+https://github.com/raspberrypi/picoprobe/issues/49#issuecomment-1331748165
+
+Launch.json
+
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Cortex Debug - PICOPROBE",
+      "cwd": "${workspaceRoot}",
+      "executable": "${command:cmake.launchTargetPath}",
+      "request": "launch",
+      "type": "cortex-debug",
+      "servertype": "openocd",
+      "gdbPath": "gdb-multiarch",
+      "device": "RP2040",
+      "configFiles": [
+        "interface/picoprobe.cfg",
+        "target/rp2040.cfg"
+        ],
+      "svdFile": "${env:PICO_SDK_PATH}/src/rp2040/hardware_regs/rp2040.svd",
+      "runToEntryPoint": "main",
+    },
+    {
+      "name": "Cortex Debug CMSIS-DAP",
+      "cwd": "${workspaceRoot}",
+      "executable": "${command:cmake.launchTargetPath}",
+      "request": "launch",
+      "type": "cortex-debug",
+      "servertype": "openocd",
+      "gdbPath": "gdb-multiarch",
+      "device": "RP2040",
+      "configFiles": [
+        "interface/cmsis-dap.cfg",
+        "target/rp2040.cfg"
+        ],
+      "svdFile": "${env:PICO_SDK_PATH}/src/rp2040/hardware_regs/rp2040.svd",
+      "runToEntryPoint": "main",
+    }    
+  ]
+}
+
+Let's configure openocd according the "get started" manual
+==========================================================
+
+cd ~/pico
+sudo apt install automake autoconf build-essential texinfo libtool libftdi-dev libusb-1.0-0-
+dev
+
+cd openocd
+./bootstrap
+./configure ①
+make -j4
+sudo make install
+
+git clone https://github.com/raspberrypi/openocd.git --branch rp2040 --depth=1
+
+
+Meniköhän rulet väärään paikkaan !!!!
+/usr/bin/install -c -m 644  contrib/60-openocd.rules '/usr/local/share/openocd/contrib'
+
+/etc/udev/rules.d/
+cd /usr/local/share/openocd/contrib
+
+I copied from contrib 60-openocd.rules to /etc/udev/rules.d and made chmod 777 enabled.
+
+
+===> new picoprobe is not working when debugging is started from vs code
+Last trial - I configure openocd for cmsis-dap and picoprobe
+
+
+This way now :
+
+./configure --enable-picoprobe --enable-cmsis-dap --disable-werror
+===>
+
+hecking whether to enable ZY1000 minidriver... no
+checking whether to enable dummy minidriver... no
+checking whether standard drivers can be built... yes
+checking for libusb-1.0... yes
+configure: libusb-1.0 header bug workaround: LIBUSB1_CFLAGS changed to "-isystem /usr/include/libusb-1.0"
+checking for libusb... yes
+checking for capstone... no
+checking for hidapi... no
+checking for hidapi-hidraw... no
+checking for hidapi-libusb... no
+checking for libftdi1... no
+checking for libftdi... yes
+checking for libgpiod... no
+checking for libjaylink >= 0.2... no
+configure: error: hidapi is required for the CMSIS-DAP Compliant Debugger
+
+Because hidapi is missing i configured this way:
+./configure --enable-picoprobe --disable-werror
+make -j2
+sudo make install
+
+
+
+
+
+
+
+
+
+
+
+
