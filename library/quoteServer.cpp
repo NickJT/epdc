@@ -1,11 +1,12 @@
 #include "quoteServer.h"
 #include <cassert>
+#include "debug.h"
 
 QuoteServer::QuoteServer(AssetStack assets) : stack{assets}
 {
 	if (!isValidStack(stack))
 	{
-		std::cout << "Stack is not valid" << std::endl;
+		dbg("Stack is not valid" << std::endl);
 		assert(isValidStack(stack));
 	}
 }

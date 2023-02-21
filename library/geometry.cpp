@@ -91,9 +91,9 @@ Pixel::Pixel(Point p)
     auto y{clampYBits(p.yVal())};
     if (x != p.xVal() || y != p.yVal())
     {
-        std::cout << "\n\rReceived an invalid Point" << std::endl;
+        //std::cout << "\n\rReceived an invalid Point" << std::endl;
     }
-    /* Note this only works for Height = 16
+    /* Note this only works for Height = 16 and probably isn't faster after optimisation 
     idx = (y << 4U) + (x >> 3U);         // mod
     val = (0b1U << (7U - (y & 0b111U))); // rem
     */

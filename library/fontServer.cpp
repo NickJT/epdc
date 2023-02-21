@@ -44,11 +44,6 @@ Verticals FontServer::fontVerticals()
 		v.maxRise = (rise > v.maxRise) ? rise : v.maxRise;
 		v.maxDrop = (g.bby < v.maxDrop) ? g.bby : v.maxDrop;
 	}
-	// PrintVerticals(v);
-	if (v.maxRise > v.verticalStep)
-	{
-		printf("Error in Extent calculation\n\r\n\r");
-	}
 	return v;
 }
 

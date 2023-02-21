@@ -3,17 +3,18 @@
 #include "styleSheets.h"
 #include "timeQuotes.h"
 #include "displayDriver.h"
+#include "debug.h"
 
 LayoutServer::LayoutServer(std::unique_ptr<displayDriver> hardwareDriver) : qs{QuoteServer(AssetStack(timeText, timeAssets, 776, 76030))},
                                                                             fs{},
                                                                             driver{std::move(hardwareDriver)}
 {
-    std::cout << "Layout server instantiated" << std::endl;
+    dbg("Layout server instantiated" << std::endl);
 }
 
 void LayoutServer::timeIs(datetime_t t)
 {
-    std::cout << "Time is " << (int)t.hour << ":" << (int)t.min << std::endl;
+    dbg("Time is " << (int)t.hour << ":" << (int)t.min << std::endl);
     driver->clear();
     auto [quoteFound, quote]{qs.quoteFor(t)};
     if (quoteFound)
@@ -29,7 +30,7 @@ void LayoutServer::timeIs(datetime_t t)
 
 void LayoutServer::cmd(Button const b)
 {
-    std::cout << "\n\rGot button " << static_cast<int>(b) << std::endl;
+    dbg("\n\rGot button " << static_cast<int>(b) << std::endl);
 }
 
 void LayoutServer::layoutQuote(std::string_view q)

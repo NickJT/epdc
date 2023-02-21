@@ -2,6 +2,9 @@
 #include "hardware/rtc.h"
 #include "pico/stdlib.h"
 #include "pico/util/datetime.h"
+#include <iostream>
+#include <string>
+#include <ctime>
 
 #include "dimensions.h"
 #include "errorCodes.h"
@@ -9,9 +12,7 @@
 #include "topCat.h"
 #include "layoutServer.h"
 #include "uc8151.h"
-#include <iostream>
-#include <string>
-#include <ctime>
+#include "debug.h"
 
 static volatile bool ntp_refresh;
 
@@ -30,7 +31,7 @@ int wifiConnected()
 {
     if (auto err{cyw43_arch_init()}; err != pico_error::code::PICO_OK)
     {
-        std::cout << "Failed to initialise cyw43 (" << pico_error::toString(err) << ")" << std::endl;
+        dbg("Failed to initialise cyw43 (" << pico_error::toString(err) << ")" << std::endl);
         return err;
     }
     cyw43_arch_enable_sta_mode();
@@ -39,12 +40,12 @@ int wifiConnected()
             cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 10000)};
         err != pico_error::code::PICO_OK)
     {
-        std::cout << "Connect timeout (err=" << err << ")" << std::endl;
+        dbg("Connect timeout (err=" << err << ")" << std::endl);
         return err;
     }
     else
     {
-        std::cout << "Connected to " << WIFI_SSID << "\n\r" << std::endl;
+        dbg("Connected to " << WIFI_SSID << "\n\r" << std::endl);
     }
     return PICO_OK;
 }
@@ -52,7 +53,7 @@ int wifiConnected()
 int wifiDisconnected()
 {
     cyw43_arch_deinit();
-    std::cout << "Deinitialising cyw43" << std::endl;
+    dbg("Deinitialising cyw43" << std::endl);
     return 0;
 }
 
@@ -78,7 +79,7 @@ int ntp2rtc()
         status = (setTime.hour == starttime.hour) && (setTime.min == starttime.min);
         if (!status)
         {
-            std::cout << setTime.hour << ":" << setTime.min << " != " << starttime.hour << ":" << starttime.min << std::endl;
+            dbg(setTime.hour << ":" << setTime.min << " != " << starttime.hour << ":" << starttime.min << std::endl);
         }
     }
     return status;
@@ -87,13 +88,13 @@ int ntp2rtc()
 bool rtc_started()
 {
     rtc_init();
-    std::cout << "Initialised RTC...\n";
-    // Start on Friday 5th of June 2020 15:45:00
+    dbg("Initialised RTC...\n");
+    // Arbitrary default start of Sunday 19 Feb 23 09:00:00
     datetime_t t = {
         .year = 2023,
         .month = 02,
         .day = 19,
-        .dotw = 0, 
+        .dotw = 0,
         .hour = 9,
         .min = 00,
         .sec = 00};
@@ -110,7 +111,7 @@ bool rtc_started()
     int retryLimit{3};
     while (!timeIsSet && retryLimit != 0)
     {
-        std::cout << "Couldn't set time from NTP retrying in 5 seconds" << std::endl;
+        dbg("Couldn't set time from NTP retrying in 5 seconds" << std::endl);
         sleep_ms(5000);
         timeIsSet = ntp2rtc();
         retryLimit--;
@@ -133,7 +134,7 @@ void printTime(datetime_t *dt)
     char *datetime_str = &datetime_buf[0];
     rtc_get_datetime(dt);
     datetime_to_str(datetime_str, sizeof(datetime_buf), dt);
-    std::cout << "RTC time is " << datetime_str << "          " << std::endl;
+    dbg("RTC time is " << datetime_str << "          " << std::endl);
 }
 
 int main()
@@ -142,23 +143,30 @@ int main()
 
     if (wifiConnected() != PICO_OK)
     {
-        std::cout << "Unable to connect to wifi - exiting" << std::endl;
+        dbg("Unable to connect to wifi - exiting" << std::endl);
         return EXIT_FAILURE;
     }
 
     if (!rtc_started())
     {
-        std::cout << "Unable to start RTC - exiting" << std::endl;
+        dbg("Unable to start RTC - exiting" << std::endl);
         return EXIT_FAILURE;
     }
 
+    // Create a unq ptr to the driver. This is how we use same the
+    // library classes with the epd and with X11 (see desktop.cpp for the X11 app)
     auto driver{std::make_unique<UC8151>()};
     LayoutServer lo(std::move(driver));
+
     ntp_refresh = true;
     datetime_t startTime;
+
+    // This is only used if we want to track the drift between the pico rtc and ntp
+    // it sets the epoch of the Topcat object at startup (only)
     rtc_get_datetime(&startTime);
     TopCat topcat(startTime);
-    std::cout << "Starting epdc at " << topcat.epoch().hour << ":" << topcat.epoch().min << std::endl;
+    dbg("Starting epdc at " << topcat.epoch().hour << ":" << topcat.epoch().min << std::endl);
+
     while (true)
     {
         datetime_t newTime;
@@ -173,7 +181,7 @@ int main()
                     datetime_t oldTime;
                     rtc_get_datetime(&oldTime);
                     rtc_set_datetime(&newTime);
-                    std::cout << "Drift is " << topcat.elapsed(newTime) << "s since " << topcat.epoch() << std::endl;
+                    dbg("Drift is " << topcat.elapsed(newTime) << "s since " << topcat.epoch() << std::endl);
                 };
             }
         }

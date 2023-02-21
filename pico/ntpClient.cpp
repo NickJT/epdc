@@ -1,42 +1,37 @@
 #include "ntpClient.h"
 #include <iostream>
+#include "debug.h"
 
 ntpClient::ntpClient()
 {
-    std::cout << "Created ntpClient" << std::endl;
+    dbg("Created ntpClient" << std::endl);
 }
 
 ntp_result_t ntpClient::getNTPTime(void)
 {
-/* if (auto err{wifiConnected()}; err != PICO_OK)
-     {
-         std::cout << "Unable to connect to " << WIFI_SSID << " [err " << err << "]" << std::endl;
-         return ntp_result_t{err, 0};
-     }
- */
     if (auto err{initInterface()}; err != PICO_OK)
     {
-        std::cout << "Unable to initialise interface " << std::endl;
+        dbg("Unable to initialise interface " << std::endl);
         return ntp_result_t{err, 0};
     }
-    std::cout << "Initialised interface" << std::endl;
+    dbg("Initialised interface" << std::endl);
 
     if (auto err{setRequestTimeout()}; err != PICO_OK)
     {
-        std::cout << "Unable set request timeout" << std::endl;
+        dbg("Unable set request timeout" << std::endl);
         return ntp_result_t{err, 0};
     }
-    std::cout << "Set request timeout on timer id: " << nstate.ntp_alarm_id << std::endl;
+    dbg("Set request timeout on timer id: " << nstate.ntp_alarm_id << std::endl);
 
     int lookup{getHostAddress(&nstate)};
     if (lookup == ERR_OK) // Then we won't go to ntp_request via the dns callback
     {
-        std::cout << "Using cached IP address: " << ip4addr_ntoa(&nstate.ntp_server_address) << std::endl;
+        dbg("Using cached IP address: " << ip4addr_ntoa(&nstate.ntp_server_address) << std::endl);
         ntp_request(&nstate);
     }
     else if (lookup != ERR_INPROGRESS) // Then we won't go to ntpComplete via the callback
     {
-        std::cout << "Unable get NTP host address (err= " << lookup << ")" << std::endl;
+        dbg("Unable get NTP host address (err= " << lookup << ")" << std::endl);
         ntpComplete(&nstate, PICO_ERROR_NO_DATA, static_cast<time_t>(0));
     }
 
@@ -56,7 +51,7 @@ int ntpClient::initInterface()
     nstate.ntp_pcb = udp_new_ip_type(IPADDR_TYPE_V4);
     if (nstate.ntp_pcb == NULL)
     {
-        std::cout << "udp_new_ip_type returns null" << std::endl;
+        dbg("udp_new_ip_type returns null" << std::endl);
         return PICO_ERROR_NO_DATA;
     }
     udp_recv(nstate.ntp_pcb, ntp_recv, &nstate);
@@ -67,7 +62,7 @@ int ntpClient::wifiConnected()
 {
     if (auto err{cyw43_arch_init()}; err != pico_error::code::PICO_OK)
     {
-        std::cout << "Failed to initialise cyw43 (" << pico_error::toString(err) << ")" << std::endl;
+        dbg("Failed to initialise cyw43 (" << pico_error::toString(err) << ")" << std::endl);
         return err;
     }
     cyw43_arch_enable_sta_mode();
@@ -76,12 +71,12 @@ int ntpClient::wifiConnected()
             cyw43_arch_wifi_connect_timeout_ms(WIFI_SSID, WIFI_PASSWORD, CYW43_AUTH_WPA2_AES_PSK, 10000)};
         err != pico_error::code::PICO_OK)
     {
-        std::cout << "Connect timeout (err=" << err << ")" << std::endl;
+        dbg("Connect timeout (err=" << err << ")" << std::endl);
         return err;
     }
     else
     {
-        std::cout << "Connected to " << WIFI_SSID << "\n\r" << std::endl;
+        dbg("Connected to " << WIFI_SSID << "\n\r" << std::endl);
     }
     return PICO_OK;
 }
@@ -94,7 +89,7 @@ int ntpClient::setRequestTimeout()
     nstate.ntp_alarm_id = add_alarm_in_ms(NTP_TIMEOUT_MS, timeoutHandler, &nstate, true);
     if (nstate.ntp_alarm_id < 1)
     {
-        std::cout << "Couldn't set request alarm (response was: " << nstate.ntp_alarm_id << std::endl;
+        dbg("Couldn't set request alarm (response was: " << nstate.ntp_alarm_id << std::endl);
         return PICO_ERROR_NOT_PERMITTED;
     }
     return PICO_OK;
@@ -113,13 +108,16 @@ int ntpClient::setRequestTimeout()
 int ntpClient::getHostAddress(ntp_t *state)
 {
     state->ntp_request_sent = true;
-    std::cout << "request sent = " << std::boolalpha << state->ntp_request_sent << std::endl;
+    dbg("request sent = " << std::boolalpha << state->ntp_request_sent << std::endl);
     cyw43_arch_lwip_begin();
     int dnsStatus{dns_gethostbyname(NTP_SERVER, &state->ntp_server_address, ntp_dns_found, state)};
     cyw43_arch_lwip_end();
     return dnsStatus;
 }
 
+/**
+ * @brief The actual call to the udp_send function
+ */
 int ntpClient::ntp_request(ntp_t *state)
 {
     cyw43_arch_lwip_begin();
@@ -145,7 +143,7 @@ int ntpClient::ntp_request(ntp_t *state)
 void ntpClient::ntpComplete(ntp_t *state, int status, time_t result)
 {
     state->ntp_request_sent = false;
-    std::cout << "request sent = " << std::boolalpha << state->ntp_request_sent << std::endl;
+    dbg("request sent = " << std::boolalpha << state->ntp_request_sent << std::endl);
     if (state->ntp_alarm_id > 0) // if the alarm was set then the id > 0
     {
         cancel_alarm(state->ntp_alarm_id);
@@ -169,16 +167,16 @@ void ntpClient::ntp_dns_found(const char *hostname, const ip_addr_t *ipaddr, voi
     if (ipaddr)
     {
         state->ntp_server_address = *ipaddr;
-        std::cout << "NTP host: " << NTP_SERVER << " at " << ip4addr_ntoa(&state->ntp_server_address) << std::endl;
+        dbg("NTP host: " << NTP_SERVER << " at " << ip4addr_ntoa(&state->ntp_server_address) << std::endl);
         if (IP_GET_TYPE(&state->ntp_server_address) != IPADDR_TYPE_V4)
         {
-            std::cout << "NTP host: " << ip4addr_ntoa(&state->ntp_server_address) << " is not IPV4" << std::endl;
+            dbg("NTP host: " << ip4addr_ntoa(&state->ntp_server_address) << " is not IPV4" << std::endl);
         }
         ntp_request(state);
     }
     else
     {
-        std::cout << "Could not resolve NTP server address " << NTP_SERVER << std::endl;
+        dbg("Could not resolve NTP server address " << NTP_SERVER << std::endl);
         ntpComplete(state, PICO_ERROR_NO_DATA, static_cast<time_t>(0));
     }
 }
@@ -205,7 +203,7 @@ void ntpClient::ntp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const i
         uint8_t seconds_buf[4] = {0};
         pbuf_copy_partial(p, seconds_buf, sizeof(seconds_buf), 40);
         time_t result{makeTime_t(seconds_buf)};
-        // std::cout << "[ntp_recv]: " << ctime(&result) << std::endl;
+        // dbg("[ntp_recv]: " << ctime(&result) << std::endl);
         ntpComplete(state, PICO_OK, result);
     }
     else
@@ -222,7 +220,7 @@ void ntpClient::ntp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const i
 int64_t ntpClient::timeoutHandler(alarm_id_t id, void *user_data)
 {
     ntp_t *state = (ntp_t *)user_data;
-    std::cout << "Timeout" << std::endl;
+    dbg("Timeout" << std::endl);
     ntpComplete(state, PICO_ERROR_TIMEOUT, static_cast<time_t>(0));
     return 0;
 }
@@ -236,12 +234,5 @@ time_t ntpClient::makeTime_t(const uint8_t seconds[4])
 
 ntpClient::~ntpClient()
 {
-    std::cout << "ntp_alarm_id: " << nstate.ntp_alarm_id << std::endl;
-    std::cout << "ntp_pcb: " << nstate.ntp_pcb << std::endl;
-    std::cout << "ntp_request_sent: " << nstate.ntp_request_sent << std::endl;
-    std::cout << "ntp_server_address: " << ip4addr_ntoa(&nstate.ntp_server_address) << std::endl;
-    std::cout << "ntp_err: " << nstate.ntp_err << std::endl;
-    std::cout << "ntp_result: " << ctime(&nstate.ntp_result);
-
-    std::cout << "Destructing ntpClient" << std::endl;
+    dbg("Destructing ntpClient" << std::endl);
 }
