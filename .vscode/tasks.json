@@ -1,35 +1,62 @@
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"type": "cmake",
-			"label": "configure",
-			"group": "build",
-			"command": "configure",
-			"problemMatcher": [],
-			"detail": "configure"
-		},
-		{
-			"type": "process",
-			"group": "build",
-			"label": "flash",
-			"dependsOn": "CMake: build",
-			"command": "openocd",
-			"args": [
-				"-stcl",
-				"-finterface/cmsis-dap.cfg",
-				"-ftarget/rp2040.cfg",
-				"-cadapter speed 5000",
-				"-cprogram ${command:cmake.launchTargetPath} verify reset exit"
-			],
-			"problemMatcher": [],
-			"detail": "Flash"
-		},
-		{
-			"label": "Show target",
-			"type": "shell",
-			"command": "echo target:  ${command:cmake.launchTargetPath}",
-			"group": "test"
-		}
-	]
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "process",
+            "label": "configure",
+            "group": "build",
+            "command": "configure",
+            "problemMatcher": [],
+            "detail": "configure"
+        },
+        {
+            "type": "process",
+            "group": "build",
+            "label": "flash",
+            "dependsOn": "CMake: build",
+            "command": "openocd",
+            "args": [
+                "-stcl",
+                "-finterface/cmsis-dap.cfg",
+                "-ftarget/rp2040.cfg",
+                "-cadapter speed 5000",
+                "-cprogram ${command:cmake.launchTargetPath} verify reset exit"
+            ],
+            "problemMatcher": [],
+            "detail": "Flash"
+        },
+        {
+            "label": "Show target",
+            "type": "shell",
+            "command": "echo target:  ${command:cmake.launchTargetPath}",
+            "group": "test"
+        },
+        {
+            "type": "cppbuild",
+            "label": "C/C++: g++ build active file",
+            "command": "/usr/bin/g++",
+            "args": [
+                "-std=c++20",
+                "-Wall",
+                "-Wextra",
+                "-Wpedantic",
+                "-fdiagnostics-color=always",
+                "-g",
+                "${file}",
+                "-o",
+                "${fileDirname}/${fileBasenameNoExtension}"
+            ],
+            "options": {
+                "cwd": "${fileDirname}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "Debug task"
+        }
+    ]
 }

@@ -43,6 +43,7 @@ constexpr char CR{static_cast<char>(0x0D)};
 #include <algorithm>
 #include <vector>
 #include <ctype.h>
+#include <map>
 
 #include "../headers/picoDatetime.h"
 #include "../headers/asset.h"
@@ -427,6 +428,7 @@ std::vector<timeText> makeItems(std::vector<std::string> lines)
 
 		timeText t{
 			.timeString = fields.at(0),
+			.dt = datetime_t{0, 0, 0, 0, 0, 0, 0}, 
 			.text = fields.at(1),
 			.source = fields.at(2),
 			.author = fields.at(3),
