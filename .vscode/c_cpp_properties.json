@@ -6,7 +6,7 @@
                 "${workspaceFolder}/**"
             ],
             "defines": [],
-            "compilerPath": "/usr/bin/gcc",
+            "compilerPath": "/usr/bin/clang++-20",
             "cStandard": "gnu17",
             "cppStandard": "gnu++20",
             "configurationProvider": "ms-vscode.cmake-tools",
