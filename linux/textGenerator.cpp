@@ -7,7 +7,7 @@
  * limited to  * ' ' > char < '~'
  * Writes an include file in the folowing format
  * n	Text
- * where n = hh * 60 + nn
+ * where n = hh * 60 + mm
  * Definitions for input and output files and directors are directly below this header
  * ** WARNING - Currently being converted from a very hacky prototype *****
  * @version 0.1
@@ -32,21 +32,20 @@ constexpr auto INCLUDE_EXT{"h"};
 constexpr char TAB{static_cast<char>(0x09)};
 constexpr char LF{static_cast<char>(0x0A)};
 constexpr char CR{static_cast<char>(0x0D)};
-constexpr char EOT{static_cast<char>(0x00)};
+//constexpr char EOT{static_cast<char>(0x00)};
 
 #include <iostream>
 #include <string>
-#include <iomanip>
 #include <sstream>
-#include <vector>
 #include <filesystem>
 #include <string>
 #include <fstream>
 #include <algorithm>
-#include "picoDatetime.h"
-#include "topCat.h"
-#include "asset.h"
-#include <map>
+#include <vector>
+#include <ctype.h>
+
+#include "../headers/picoDatetime.h"
+#include "../headers/asset.h"
 
 struct timeText
 {
@@ -109,6 +108,7 @@ bool cleanText(std::vector<timeText> &items)
 	badChars[142] = 'A';
 	badChars[143] = 'A';
 	badChars[144] = 'E';
+	badChars[146] = '\'';
 	badChars[147] = 'o';
 	badChars[148] = 'o';
 	badChars[149] = 'o';
@@ -129,20 +129,25 @@ bool cleanText(std::vector<timeText> &items)
 	badChars[226] = '\'';
 
 	bool bad{false};
+	int row {0};
 	for (auto &item : items)
 	{
+		row++;
 		for (size_t i{0}; i < item.text.size(); i++)
 		{
 			char c{item.text.at(i)};
+			//std::cout << c << " " ;
 			if ((c < ' ' || c > '~') && c != CR && c != LF)
 			{
 				if (badChars.contains((uint8_t)c))
 				{
 					item.text.at(i) = badChars.at(c);
+					std::cout << "Row " << row  << " Bad " << c << " (" << (int) c << ") replaced with " << item.text.at(i) << std::endl;
 				}
 				else
 				{
 					item.text.at(i) = ' ';
+					std::cout << "Row " << row  << " " << " Unknown: " << c << " (" << (int) c << ") replaced with space" << std::endl;
 					bad = true;
 				}
 			}
