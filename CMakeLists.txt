@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.31)
 
 if(${CMAKE_CXX_COMPILER} STREQUAL "/usr/bin/arm-none-eabi-g++")
   message("\n\r******** Building pico directory **********\n\r")
@@ -9,7 +9,7 @@ if(${CMAKE_CXX_COMPILER} STREQUAL "/usr/bin/arm-none-eabi-g++")
 endif()
 
 project(epdClock C CXX ASM)
-set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD 17)
 set(CMAKE_CXX_STANDARD 20)
 
 add_compile_options(
@@ -22,6 +22,7 @@ add_compile_options(
   -Wno-unknown-pragmas)
 
 if(${CMAKE_CXX_COMPILER} STREQUAL "/usr/bin/g++")
+  include(CTest)
   message("\n\r******** Entering library directory **********\n\r")
   add_subdirectory(library)
   message("\n\r******** Entering linux directory **********\n\r")

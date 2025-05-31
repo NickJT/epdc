@@ -77,7 +77,7 @@ public:
     Point &operator-=(const Point &rhs);
     Point &operator+=(const Point &rhs);
     Point &operator=(const Point &rhs);
-    bool operator==(const Point &rhs);
+    bool operator==(const Point &rhs) const;
 
 private:
     uint_t x;
@@ -118,7 +118,7 @@ public:
     inline uint_t const index() const { return idx; }
     inline uint8_t const value() const { return val; }
 
-    bool operator==(const Pixel &rhs);
+    bool operator==(const Pixel &rhs) const;
     Pixel &operator=(const Pixel &rhs);
 
 private:

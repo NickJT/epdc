@@ -6,7 +6,7 @@
 - Generates the elf (or uf2) to be flashed on the Pico W
 
 ### desktop.cpp 
-- A linux X11 app originally meant for testing the font rendering
+- A linux X11 app originally meant for testing the font rendering. The executable is called xclock.
 
 ### fontGenerator.cpp 
 - A linux cmd line app to generate embeddable (.h) files from standard Adobe BDF files

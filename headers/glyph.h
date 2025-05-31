@@ -8,6 +8,8 @@
 #include <sstream>
 #include <string>
 #include <cctype>
+#include <algorithm>
+#include <cstdint>
 
 class Glyph
 {

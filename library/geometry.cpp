@@ -65,7 +65,7 @@ Point &Point::operator=(const Point &rhs)
     return *this;
 }
 
-bool Point::operator==(const Point &rhs)
+bool Point::operator==(const Point &rhs) const
 {
     return ((x == rhs.xVal()) && (y == rhs.yVal()));
 }
@@ -102,7 +102,7 @@ Pixel::Pixel(Point p)
     val = (0b1 << (7 - res.rem));
 }
 
-bool Pixel::operator==(const Pixel &rhs)
+bool Pixel::operator==(const Pixel &rhs) const
 {
     return ((idx == rhs.index()) && (val == rhs.value()));
 }
