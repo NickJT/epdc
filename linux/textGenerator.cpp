@@ -52,6 +52,7 @@ struct timeText
 {
 	std::string timeString;
 	datetime_t dt;
+	std::string marker;
 	std::string text;
 	std::string source;
 	std::string author;
@@ -419,7 +420,7 @@ std::vector<timeText> makeItems(std::vector<std::string> lines)
 			fields.push_back(field);
 		}
 
-		if (fields.size() != 4)
+		if (fields.size() != 5)
 		{
 			std::cout << "Error - Length = " << fields.size() << std::endl;
 			std::cout << "Line: " << line << std::endl;
@@ -428,10 +429,11 @@ std::vector<timeText> makeItems(std::vector<std::string> lines)
 
 		timeText t{
 			.timeString = fields.at(0),
-			.dt = datetime_t{0, 0, 0, 0, 0, 0, 0}, 
-			.text = fields.at(1),
-			.source = fields.at(2),
-			.author = fields.at(3),
+			.dt = datetime_t{0, 0, 0, 0, 0, 0, 0},
+			.marker = fields.at(1), 
+			.text = fields.at(2),
+			.source = fields.at(3),
+			.author = fields.at(4),
 		};
 		items.push_back(t);
 	}
@@ -473,6 +475,22 @@ bool makeDatetimes(std::vector<timeText> &items)
 		}
 	}
 	return true;
+}
+
+void checkMarkers(std::vector<timeText> &items) {
+	auto tally {0};
+	for (auto &item : items) {
+		auto mkr {item.marker};
+		std::transform(mkr.begin(), mkr.end(), mkr.begin(), ::toupper);
+		auto txt {item.text};
+		std::transform(txt.begin(), txt.end(), txt.begin(), ::toupper);
+		if (txt.find(mkr) == std::string::npos)
+		{
+			std::cout << "[" << item.marker << "] not in " << item.text << std::endl;
+			tally++;
+		}
+	}
+	std::cout << "\n" << tally << " mismatched markers found" << std::endl;
 }
 
 std::string GetFileContent(std::filesystem::path fPath)
@@ -541,6 +559,9 @@ int main()
 	replaceDoubleQuotes(raw);
 	auto lines{makeLines(raw, LF)};
 	auto items{makeItems(lines)};
+	
+	checkMarkers(items);
+
 	std::cout << TAB << TAB << items.size() << " items found\n\r";
 
 	if (!cleanText(items))
