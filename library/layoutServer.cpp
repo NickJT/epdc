@@ -5,7 +5,7 @@
 #include "displayDriver.h"
 #include "debug.h"
 
-LayoutServer::LayoutServer(std::unique_ptr<displayDriver> hardwareDriver) : qs{QuoteServer(AssetStack(timeText, timeAssets, 776, 76030))},
+LayoutServer::LayoutServer(std::unique_ptr<displayDriver> hardwareDriver) : qs{QuoteServer(AssetStack(timeText, timeAssets, 3108, 671829))},
                                                                             fs{},
                                                                             driver{std::move(hardwareDriver)}
 {

@@ -1,6 +1,4 @@
-cmake_minimum_required(VERSION 3.6)
-
-  pico_sdk_init()
+cmake_minimum_required(VERSION 3.13)
 
 add_library(
   libPico STATIC
@@ -24,11 +22,12 @@ target_include_directories(libPico PUBLIC ${CMAKE_HOME_DIRECTORY}/headers
 # ############## Executable for main app ################
 # ##############################################################################
 add_executable(epdc epdc.cpp ntpClient.cpp uc8151.cpp)
+pico_set_program_name(epdc "e2")
+pico_set_program_version(epdc "0.1")
 
 target_include_directories(
   epdc
   PUBLIC ${CMAKE_HOME_DIRECTORY}/headers
-         "/home/nick/pico/pico-sdk/src/rp2_common/pico_cyw43_arch/include/pico/"
 )
 
 target_compile_definitions(epdc PRIVATE WIFI_SSID="Treehouse"

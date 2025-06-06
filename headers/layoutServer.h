@@ -7,7 +7,7 @@
 #include "quoteServer.h"
 #include "fontServer.h"
 #include "bdfFont.h"
-#include "quotes.h"
+#include "timeQuotes.h"
 #include "topCat.h"
 #include "frameBuffer.h"
 
