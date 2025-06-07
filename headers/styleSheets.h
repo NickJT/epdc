@@ -3,9 +3,11 @@
 #include "bdfFont.h"
 #include "font112.h"
 #include "sans22.h"
+#include "sans24.h"
 
 Style clockStyle{
     .font = font112,
+    .bold = Sans24,
     .homeX = 0,
     .homeY = 10,
     .topMargin = 0,
@@ -16,6 +18,7 @@ Style clockStyle{
 
 Style quoteStyle{
     .font = Sans22,
+    .bold = Sans24,
     .homeX = 0,
     .homeY = 10,
     .topMargin = 0,

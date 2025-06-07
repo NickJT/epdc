@@ -5,6 +5,7 @@
 struct Style
 {
     BdfFont font;
+    BdfFont bold;
     int homeX;
     int homeY;
     int topMargin;

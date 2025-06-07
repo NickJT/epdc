@@ -36,7 +36,8 @@ void LayoutServer::cmd(Button const b)
 void LayoutServer::layoutQuote(std::string_view q)
 {
     int rowMargin = quoteStyle.rowMargin;
-
+    // This is where we set the font for this layout
+    // TODO - Add a second font for the timestring (e.g. Bold)
     fs = FontServer(quoteStyle.font);
     auto verts{fs.fontVerticals()};
     int vStep{rowMargin + verts.verticalStep};
@@ -79,6 +80,11 @@ size_t LayoutServer::setFirstCharOrigin(size_t home, char c)
     return home;
 }
 
+/// @brief  Render the passed line by passing each char to the renderChar function.
+/// @todo Detect the Bold on "<" and Bold off ">" chars and switch fontserver accordingly.
+/// @param line 
+/// @param originX 
+/// @param originY 
 void LayoutServer::renderLine(std::string_view line, int originX, int originY)
 {
     originX = setFirstCharOrigin(originX, line.at(0));
