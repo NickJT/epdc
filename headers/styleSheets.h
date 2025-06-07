@@ -5,6 +5,9 @@
 #include "sans22.h"
 #include "sans24.h"
 
+constexpr char boldOn = '<';
+constexpr char boldOff = '>';
+
 Style clockStyle{
     .font = font112,
     .bold = Sans24,

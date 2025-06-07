@@ -1,4 +1,3 @@
-
 #include "layoutServer.h"
 #include "styleSheets.h"
 #include "timeQuotes.h"
