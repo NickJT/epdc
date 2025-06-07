@@ -17,12 +17,12 @@ set_target_properties(libPico PROPERTIES OUTPUT_NAME "pico")
 target_include_directories(libPico PUBLIC ${CMAKE_HOME_DIRECTORY}/headers
                                           ${CMAKE_HOME_DIRECTORY}/fonts)
                                           
-#${CMAKE_CURRENT_SOURCE_DIR}  
+
 # ##############################################################################
 # ############## Executable for main app ################
 # ##############################################################################
 add_executable(epdc epdc.cpp ntpClient.cpp uc8151.cpp)
-pico_set_program_name(epdc "e2")
+pico_set_program_name(epdc "epdc")
 pico_set_program_version(epdc "0.1")
 
 target_include_directories(
